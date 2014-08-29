@@ -19,3 +19,11 @@ local.properties
 .classpath
 .project
 .settings/
+
+# Android Studio settings
+.idea/
+TwitterClient.iml
+
+gradle/
+.gradle/
+build/
