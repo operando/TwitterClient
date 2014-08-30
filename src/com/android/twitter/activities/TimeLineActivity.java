@@ -35,7 +35,7 @@ import twitter4j.URLEntity;
  * タイムライン画面を表示するアクティビティ.
  *
  */
-public class TwitterClient2Activity extends ListActivity implements
+public class TimeLineActivity extends ListActivity implements
         LoaderCallbacks<List<TwitterStatus>> {
 
     /** 更新用のアイテムID. */

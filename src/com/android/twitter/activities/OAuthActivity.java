@@ -113,7 +113,7 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
 			editor.commit();
 
 			// タイムライン画面へ遷移する
-			Intent intent = new Intent(this, TwitterClient2Activity.class);
+			Intent intent = new Intent(this, TimeLineActivity.class);
 			startActivity(intent);
 			con = null;
 			finish();
