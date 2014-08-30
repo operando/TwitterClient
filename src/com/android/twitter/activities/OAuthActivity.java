@@ -1,4 +1,4 @@
-package com.android.twitter;
+package com.android.twitter.activities;
 
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
@@ -17,6 +17,13 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import com.android.twitter.MyLoaderCallbacks;
+import com.android.twitter.OauthLoader;
+import com.android.twitter.OauthTask;
+import com.android.twitter.R;
+import com.android.twitter.RequestLoader;
+import com.android.twitter.TwitterParameter;
 
 /**
  * .

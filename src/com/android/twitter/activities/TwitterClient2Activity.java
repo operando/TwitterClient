@@ -1,10 +1,5 @@
-package com.android.twitter;
+package com.android.twitter.activities;
 
-import java.util.HashMap;
-import java.util.List;
-
-import twitter4j.Status;
-import twitter4j.URLEntity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.LoaderManager.LoaderCallbacks;
@@ -21,6 +16,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.android.twitter.R;
+import com.android.twitter.TwitterDbAdapter;
+import com.android.twitter.TwitterParameter;
+import com.android.twitter.TwitterStatus;
+import com.android.twitter.TwitterTask;
+import com.android.twitter.adapters.TwitterAdapter;
+
+import java.util.HashMap;
+import java.util.List;
+
+import twitter4j.Status;
+import twitter4j.URLEntity;
 
 /**
  *
