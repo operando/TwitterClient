@@ -8,7 +8,7 @@ import twitter4j.auth.RequestToken;
  * LoaderCallbacksを実装したクラスからActivityへアクセスするためのインターフェース.
  *
  */
-interface MyLoaderCallbacks {
+public interface MyLoaderCallbacks {
 
 	/**
 	 *
