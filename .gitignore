@@ -27,3 +27,4 @@ TwitterClient.iml
 gradle/
 .gradle/
 build/
+/local.properties
