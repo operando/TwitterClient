@@ -1,5 +1,17 @@
 package com.android.twitter;
 
+import android.app.ProgressDialog;
+import android.content.AsyncTaskLoader;
+import android.content.Context;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
+import android.util.Log;
+
+import com.android.twitter.TwitterParameter.ERR;
+import com.android.twitter.models.TwitterStatus;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -16,16 +28,6 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
-import android.app.ProgressDialog;
-import android.content.AsyncTaskLoader;
-import android.content.Context;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
-import android.graphics.BitmapFactory;
-import android.util.Log;
-
-import com.android.twitter.TwitterParameter.ERR;
 
 /**
  *
@@ -88,8 +90,7 @@ public class TwitterTask extends AsyncTaskLoader<List<TwitterStatus>> {
         confbuilder = new ConfigurationBuilder().setOAuthAccessToken(token)
                 .setOAuthAccessTokenSecret(tokensecret)
                 .setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
-                .setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET)
-                .setUseSSL(true);
+                .setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
 
         con = context;
         loaderId = id;
@@ -137,7 +138,7 @@ public class TwitterTask extends AsyncTaskLoader<List<TwitterStatus>> {
                 TwitterStatus twitterstatus = new TwitterStatus();
 
                 // アイコン取得処理
-                URL iconURL = status.getUser().getProfileImageURL();
+                URL iconURL = new URL(status.getUser().getProfileImageURL());
 
                 Bitmap icon;
                 String uri = iconURL.toString();

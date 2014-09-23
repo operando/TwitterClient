@@ -8,7 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.android.twitter.R;
-import com.android.twitter.model.TwitterStatus;
+import com.android.twitter.models.TwitterStatus;
 
 import java.util.List;
 

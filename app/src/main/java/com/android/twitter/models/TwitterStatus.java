@@ -1,4 +1,4 @@
-package com.android.twitter.model;
+package com.android.twitter.models;
 
 import android.graphics.Bitmap;
 
