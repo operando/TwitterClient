@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,35 +30,35 @@ import twitter4j.Status;
 import twitter4j.URLEntity;
 
 /**
- *
  * タイムライン画面を表示するアクティビティ.
- *
  */
 public class TimeLineActivity extends ListActivity implements
         LoaderCallbacks<List<TwitterStatus>> {
 
-    /** 更新用のアイテムID. */
+    /**
+     * 更新用のアイテムID.
+     */
     public static final int UPDATE_ID = Menu.FIRST;
 
-    /** TwitterTaskオブジェクトを保持. */
+    /**
+     * TwitterTaskオブジェクトを保持.
+     */
     private TwitterTask twitterTask;
 
-    /** . TwitterDbAdapterオブジェクト */
+    /**
+     * . TwitterDbAdapterオブジェクト
+     */
     private TwitterDbAdapter mTwitterDb;
 
-    /** . 取得したアイコンの差分データを保持する */
+    /**
+     * . 取得したアイコンの差分データを保持する
+     */
     private HashMap<String, byte[]> map;
 
-    /** . テーブルのレコード数 */
-    private int recordsize;
-
     /**
-     *
      * ビューの作成、データの準備、初期処理などを行う.
      *
-     * @param savedInstanceState
-     *            前回のアプリ終了時の情報を保持
-     *
+     * @param savedInstanceState 前回のアプリ終了時の情報を保持
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -79,10 +78,6 @@ public class TimeLineActivity extends ListActivity implements
 
             mTwitterDb = new TwitterDbAdapter(this);
             mTwitterDb.open();
-
-            count();
-
-            // Log.v("tag", Integer.toString(recordsize));
 
             map = new HashMap<String, byte[]>();
 
@@ -116,15 +111,10 @@ public class TimeLineActivity extends ListActivity implements
     }
 
     /**
-     *
      * Loaderの開始処理.
      *
-     * @param id
-     *            ローダを識別する ID
-     *
-     * @param args
-     *            ローダインスタンスの初期化に必要なパラメーターを格納
-     *
+     * @param id   ローダを識別する ID
+     * @param args ローダインスタンスの初期化に必要なパラメーターを格納
      * @return twitterTask ローダオブジェクト
      */
     public Loader<List<TwitterStatus>> onCreateLoader(int id, Bundle args) {
@@ -142,57 +132,53 @@ public class TimeLineActivity extends ListActivity implements
     /**
      * Loaderの処理終了コールバック.
      *
-     * @param arg0
-     *            ローダオブジェクト
-     *
-     * @param arg1
-     *            取得したタイムラインの情報
-     *
+     * @param arg0 ローダオブジェクト
+     * @param arg1 取得したタイムラインの情報
      */
     public void onLoadFinished(Loader<List<TwitterStatus>> arg0,
-            List<TwitterStatus> arg1) {
+                               List<TwitterStatus> arg1) {
 
         if (arg1 == null) {
             // エラー処理.
             TwitterTask exceptionTask = (TwitterTask) arg0;
             switch (exceptionTask.getErr()) {
-            case NETWORKERR:
-                Toast.makeText(this, R.string.errnet, Toast.LENGTH_LONG).show();
-                break;
-            case TWITTERERR:
-                Toast.makeText(this, R.string.gettlerr, Toast.LENGTH_LONG)
-                        .show();
-                break;
-            case OAUTHERR:
-                if (exceptionTask.getId() == 0) {
-                    // 初期起動時の認証エラー
-                    Intent intent = new Intent(this, OAuthActivity.class);
-                    startActivity(intent);
-                    finish();
-                    getLoaderManager().destroyLoader(0);
-                } else {
-                    // 更新時の認証エラー
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-                    dialog.setMessage(R.string.apperr);
-                    dialog.setPositiveButton(R.string.ok,
-                            new DialogInterface.OnClickListener() {
+                case NETWORKERR:
+                    Toast.makeText(this, R.string.errnet, Toast.LENGTH_LONG).show();
+                    break;
+                case TWITTERERR:
+                    Toast.makeText(this, R.string.gettlerr, Toast.LENGTH_LONG)
+                            .show();
+                    break;
+                case OAUTHERR:
+                    if (exceptionTask.getId() == 0) {
+                        // 初期起動時の認証エラー
+                        Intent intent = new Intent(this, OAuthActivity.class);
+                        startActivity(intent);
+                        finish();
+                        getLoaderManager().destroyLoader(0);
+                    } else {
+                        // 更新時の認証エラー
+                        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+                        dialog.setMessage(R.string.apperr);
+                        dialog.setPositiveButton(R.string.ok,
+                                new DialogInterface.OnClickListener() {
 
-                                public void onClick(DialogInterface dialog,
-                                        int which) {
-                                    Intent intent = new Intent(
-                                            getApplicationContext(),
-                                            OAuthActivity.class);
-                                    startActivity(intent);
-                                    finish();
-                                }
-                            }).show();
-                }
-                // Preferencesの内容を削除する
-                resetPreferences();
+                                    public void onClick(DialogInterface dialog,
+                                                        int which) {
+                                        Intent intent = new Intent(
+                                                getApplicationContext(),
+                                                OAuthActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    }
+                                }).show();
+                    }
+                    // Preferencesの内容を削除する
+                    resetPreferences();
 
-                break;
-            default:
-                break;
+                    break;
+                default:
+                    break;
             }
         } else {
             // タイムライン表示処理
@@ -207,10 +193,6 @@ public class TimeLineActivity extends ListActivity implements
             if (map.size() >= TwitterParameter.MAPMAXSIZE) {
                 Log.v("MapSize(INSERTMAE)", Integer.toString(map.size()));
                 insertmap();
-                Cursor c = mTwitterDb.countrecord();
-                c.moveToFirst();
-                Log.v("RecordSize", Integer.toString(c.getInt(0)));
-                c.close();
             } else {
                 Log.v("MapSize(NOINSERT)", Integer.toString(map.size()));
             }
@@ -222,9 +204,7 @@ public class TimeLineActivity extends ListActivity implements
     /**
      * メニューオプション作成.
      *
-     * @param menu
-     *            Menuオブジェクト
-     *
+     * @param menu Menuオブジェクト
      * @return result メニュー表示の有無
      */
     @Override
@@ -237,22 +217,19 @@ public class TimeLineActivity extends ListActivity implements
     /**
      * メニューオプション押下処理.
      *
-     * @param item
-     *            タップされたメニュー
-     *
+     * @param item タップされたメニュー
      * @return 選択処理の完了
-     *
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
-        case UPDATE_ID:
-            Bundle bundle = createBundle();
-            getLoaderManager().initLoader(1, bundle, this);
-            return true;
-        default:
-            break;
+            case UPDATE_ID:
+                Bundle bundle = createBundle();
+                getLoaderManager().initLoader(1, bundle, this);
+                return true;
+            default:
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -301,9 +278,6 @@ public class TimeLineActivity extends ListActivity implements
         if (mTwitterDb != null) {
             if (map.size() != 0) {
                 insertmap();
-                Cursor c = mTwitterDb.countrecord();
-                c.moveToFirst();
-                // Log.v("RecordSize", Integer.toString(c.getInt(0)));
             } else {
                 mTwitterDb.close();
             }
@@ -312,14 +286,12 @@ public class TimeLineActivity extends ListActivity implements
     }
 
     /**
-     *
      * HashMapの中身をINSERTする処理
-     *
      */
     public void insertmap() {
         // レコード数 = テーブルのレコード数 + HashMapが保持しているURIの数 - テーブルのレコード上限数
         // テストでは上限を20件に設定。
-        int result = recordsize + map.size() - TwitterParameter.RECORDMAX;
+        long result = mTwitterDb.getRecordCount() + map.size() - TwitterParameter.RECORDMAX;
 
         // レコード数が0より大きかったら、テーブルのレコードを削除
         if (result > 0) {
@@ -336,24 +308,12 @@ public class TimeLineActivity extends ListActivity implements
         // HashMapをクリア
         map.clear();
         Log.v("MapSize(Clear)", Integer.toString(map.size()));
-
-        count();
-    }
-
-    public void count() {
-        Cursor c = mTwitterDb.countrecord();
-        c.moveToFirst();
-        recordsize = c.getInt(0);
-        c.close();
-
     }
 
     /**
      * Loaderがリセットされた時によびだされる.
      *
-     * @param arg0
-     *            ローダオブジェクト
-     *
+     * @param arg0 ローダオブジェクト
      */
     public void onLoaderReset(Loader<List<TwitterStatus>> arg0) {
 
