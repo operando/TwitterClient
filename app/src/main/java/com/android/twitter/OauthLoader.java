@@ -1,11 +1,12 @@
 package com.android.twitter;
 
-import twitter4j.auth.AccessToken;
-import twitter4j.auth.RequestToken;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.Context;
 import android.content.Loader;
 import android.os.Bundle;
+
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
 //import android.util.Log;
 
 /**
@@ -76,17 +77,8 @@ public class OauthLoader implements LoaderCallbacks<AccessToken> {
 	 *
 	 */
 	public void onLoadFinished(Loader<AccessToken> arg0, AccessToken arg1) {
-
 		OauthTask exceptionTaks = (OauthTask) arg0;
-
-		// デバッグ
-		/*if (arg1 != null) {
-			Log.v("trg", arg1.toString());
-			Log.v("trg", "PINOK");
-		}*/
-
 		mLoadercallback.oauthCallback(exceptionTaks, arg1);
-
 	}
 
 	/**

@@ -1,5 +1,10 @@
 package com.android.twitter;
 
+import android.content.AsyncTaskLoader;
+import android.content.Context;
+
+import com.android.twitter.TwitterParameter.ERR;
+
 import java.io.IOException;
 import java.net.ConnectException;
 
@@ -9,10 +14,6 @@ import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
-import android.content.AsyncTaskLoader;
-import android.content.Context;
-
-import com.android.twitter.TwitterParameter.ERR;
 
 /**
  *
@@ -44,10 +45,8 @@ public class OauthTask extends AsyncTaskLoader<AccessToken> {
 	 */
 	public OauthTask(Context context, String pin, RequestToken reqToken) {
 		super(context);
-
 		mPin = pin;
 		mReqToken = reqToken;
-		// Log.v("tag", "consutorakuta");
 	}
 
 	/**
@@ -59,11 +58,7 @@ public class OauthTask extends AsyncTaskLoader<AccessToken> {
 	 */
 	@Override
 	public AccessToken loadInBackground() {
-
 		try {
-			// Log.v("tag", "back");
-			// Log.v("tag", mPin);
-
 			ConfigurationBuilder confbuilder = new ConfigurationBuilder()
 					.setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
 					.setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
@@ -75,16 +70,11 @@ public class OauthTask extends AsyncTaskLoader<AccessToken> {
 					mPin);
 
 			return accsessToken;
-
 		} catch (TwitterException e) {
 			e.printStackTrace();
-			// Log.v("tag", "err");
-			// Log.v("tag", Integer.toString(e.getStatusCode()));
 			if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
 				exception = ERR.OAUTHERR;
-				// Log.v("tag", "oauth");
 			} else {
-				// Log.v("tag", "net");
 				if (e.getCause() instanceof IOException
 						&& e.getCause() instanceof ConnectException) {
 					exception = ERR.NETWORKERR;
