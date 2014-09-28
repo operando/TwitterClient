@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.android.twitter.activities.TimeLineActivity">
+    <item
+        android:id="@+id/time_line_update"
+        android:title="@string/menu_update"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+</menu>

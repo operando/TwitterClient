@@ -19,4 +19,6 @@
     <string name="date">MM/dd HH:mm</string>
     <string name="ok">OK</string>
 
+    <string name="menu_update">Update</string>
+
 </resources>

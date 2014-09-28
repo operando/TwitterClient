@@ -1,12 +1,15 @@
 package com.android.twitter;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 
 import com.android.twitter.databases.TwitterClientHelper;
 import com.android.twitter.models.TwitterIconCache;
+
+import java.util.Map;
 
 /**
  * .
@@ -60,22 +63,20 @@ public class TwitterDbAdapter {
         mDbHelper.close();
     }
 
-    /**
-     * .
-     * <p/>
-     * テーブルへのINSERT処理
-     *
-     * @param uri   アイコンへのURI
-     * @param bytes アイコンをbyte変換したもの
-     * @return long ID
-     */
-    public long insert(String uri, byte[] bytes) {
-        ContentValues initialValues = new ContentValues();
-        initialValues.put(TwitterIconCache.TwitterIconCacheColumns.URI, uri);
-        initialValues.put(TwitterIconCache.TwitterIconCacheColumns.ICON, bytes);
-
-        return mDb.insert(TwitterIconCache.TABLE_NAME, null, initialValues);
-
+    public void insertsIcon(Map<String, byte[]> icons) {
+        SQLiteStatement stat = mDb.compileStatement("INSERT INTO " + TwitterIconCache.TABLE_NAME + "(" +
+                TwitterIconCache.TwitterIconCacheColumns.URI + "," +
+                TwitterIconCache.TwitterIconCacheColumns.ICON + ") VALUES(?,?)");
+        try {
+            mDb.beginTransaction();
+            for (Map.Entry<String, byte[]> icon : icons.entrySet()) {
+                stat.bindString(1, icon.getKey());
+                stat.bindBlob(2, icon.getValue());
+                stat.executeInsert();
+            }
+        } finally {
+            mDb.setTransactionSuccessful();
+        }
     }
 
     /**
@@ -100,8 +101,16 @@ public class TwitterDbAdapter {
      * @return 処理結果
      */
     public boolean delete(long count) {
-        return mDb.delete(TwitterIconCache.TABLE_NAME, TwitterIconCache.TwitterIconCacheColumns.URI + " in(select " + TwitterIconCache.TwitterIconCacheColumns.URI + " from "
-                + TwitterIconCache.TABLE_NAME + " limit 0,?)", new String[]{Long.toString(count)}) > 0;
+        boolean isDelete = false;
+        try {
+            mDb.beginTransaction();
+            isDelete = mDb.delete(TwitterIconCache.TABLE_NAME, TwitterIconCache.TwitterIconCacheColumns.URI + " in(select " + TwitterIconCache.TwitterIconCacheColumns.URI + " from "
+                    + TwitterIconCache.TABLE_NAME + " limit 0,?)", new String[]{Long.toString(count)}) > 0;
+            mDb.setTransactionSuccessful();
+        } finally {
+            mDb.endTransaction();
+        }
+        return isDelete;
     }
 
     /**
@@ -112,13 +121,7 @@ public class TwitterDbAdapter {
      * @return TwitterIconCacheテーブルのレコード数
      */
     public long getRecordCount() {
-        long recordCount = 0;
-        Cursor c = mDb.query(TwitterIconCache.TABLE_NAME, new String[]{"COUNT(*)"}, null, null,
-                null, null, null);
-        if (c.moveToNext()) {
-            recordCount = c.getLong(0);
-        }
-        return recordCount;
+        return DatabaseUtils.queryNumEntries(mDb, TwitterIconCache.TABLE_NAME);
     }
 
 }

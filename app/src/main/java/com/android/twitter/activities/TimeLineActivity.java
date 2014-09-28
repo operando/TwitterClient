@@ -36,11 +36,6 @@ public class TimeLineActivity extends ListActivity implements
         LoaderCallbacks<List<TwitterStatus>> {
 
     /**
-     * 更新用のアイテムID.
-     */
-    public static final int UPDATE_ID = Menu.FIRST;
-
-    /**
      * TwitterTaskオブジェクトを保持.
      */
     private TwitterTask twitterTask;
@@ -209,9 +204,8 @@ public class TimeLineActivity extends ListActivity implements
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        boolean result = super.onCreateOptionsMenu(menu);
-        menu.add(0, UPDATE_ID, 0, R.string.updete);
-        return result;
+        getMenuInflater().inflate(R.menu.time_line, menu);
+        return true;
     }
 
     /**
@@ -222,9 +216,8 @@ public class TimeLineActivity extends ListActivity implements
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch (item.getItemId()) {
-            case UPDATE_ID:
+            case R.id.time_line_update:
                 Bundle bundle = createBundle();
                 getLoaderManager().initLoader(1, bundle, this);
                 return true;
@@ -298,13 +291,8 @@ public class TimeLineActivity extends ListActivity implements
             mTwitterDb.delete(result);
         }
 
-        // HashMapのキー値を取得
-        String[] key = (String[]) map.keySet().toArray(new String[0]);
+        mTwitterDb.insertsIcon(map);
 
-        for (String uri : key) {
-            // HashMapの中身をテーブルにINSET
-            mTwitterDb.insert(uri, map.get(uri));
-        }
         // HashMapをクリア
         map.clear();
         Log.v("MapSize(Clear)", Integer.toString(map.size()));
