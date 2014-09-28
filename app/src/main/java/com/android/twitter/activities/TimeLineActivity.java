@@ -6,7 +6,6 @@ import android.app.LoaderManager.LoaderCallbacks;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,7 +13,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.android.twitter.R;
 import com.android.twitter.TwitterDbAdapter;
@@ -22,6 +20,8 @@ import com.android.twitter.TwitterParameter;
 import com.android.twitter.TwitterTask;
 import com.android.twitter.adapters.TwitterAdapter;
 import com.android.twitter.models.TwitterStatus;
+import com.android.twitter.utils.PreferenceUtils;
+import com.android.twitter.utils.ToastUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -81,28 +81,13 @@ public class TimeLineActivity extends ListActivity implements
     }
 
     public Bundle createBundle() {
-
-        SharedPreferences pref = getSharedPreferences(
-                TwitterParameter.PREFERENCES_NAME, MODE_PRIVATE);
-        String token = pref.getString(TwitterParameter.TOKEN_KEYNAME, "");
-        String tokensecret = pref.getString(
-                TwitterParameter.TOKENSECRET_KYENAME, "");
-
         // Loaderに渡すBundleを作成
         Bundle bundle = new Bundle();
-        bundle.putString(TwitterParameter.TOKEN_KEYNAME, token);
-        bundle.putString(TwitterParameter.TOKENSECRET_KYENAME, tokensecret);
-
+        bundle.putString(TwitterParameter.TOKEN_KEYNAME, PreferenceUtils.getString(this,
+                TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKEN_KEYNAME, ""));
+        bundle.putString(TwitterParameter.TOKENSECRET_KYENAME, PreferenceUtils.getString(this,
+                TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKENSECRET_KYENAME, ""));
         return bundle;
-
-    }
-
-    public void resetPreferences() {
-
-        SharedPreferences pref = getSharedPreferences(
-                TwitterParameter.PREFERENCES_NAME, MODE_PRIVATE);
-        pref.edit().clear().commit();
-
     }
 
     /**
@@ -138,11 +123,10 @@ public class TimeLineActivity extends ListActivity implements
             TwitterTask exceptionTask = (TwitterTask) arg0;
             switch (exceptionTask.getErr()) {
                 case NETWORKERR:
-                    Toast.makeText(this, R.string.errnet, Toast.LENGTH_LONG).show();
+                    ToastUtils.show(this, R.string.errnet);
                     break;
                 case TWITTERERR:
-                    Toast.makeText(this, R.string.gettlerr, Toast.LENGTH_LONG)
-                            .show();
+                    ToastUtils.show(this, R.string.gettlerr);
                     break;
                 case OAUTHERR:
                     if (exceptionTask.getId() == 0) {
@@ -168,8 +152,7 @@ public class TimeLineActivity extends ListActivity implements
                                     }
                                 }).show();
                     }
-                    // Preferencesの内容を削除する
-                    resetPreferences();
+                    PreferenceUtils.clear(this, TwitterParameter.PREFERENCES_NAME);
 
                     break;
                 default:
@@ -267,35 +250,29 @@ public class TimeLineActivity extends ListActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        Log.v("MapSize(INSERTMAE)", Integer.toString(map.size()));
         if (mTwitterDb != null) {
             if (map.size() != 0) {
+                // レコード数 = テーブルのレコード数 + HashMapが保持しているURIの数 - テーブルのレコード上限数
+                // テストでは上限を20件に設定。
+                long result = mTwitterDb.getRecordCount() + map.size() - TwitterParameter.RECORDMAX;
+                // レコード数が0より大きかったら、テーブルのレコードを削除
+                if (result > 0) {
+                    mTwitterDb.delete(result);
+                }
                 insertmap();
+                // HashMapをクリア
+                map.clear();
             } else {
                 mTwitterDb.close();
             }
         }
-
     }
 
     /**
      * HashMapの中身をINSERTする処理
      */
     public void insertmap() {
-        // レコード数 = テーブルのレコード数 + HashMapが保持しているURIの数 - テーブルのレコード上限数
-        // テストでは上限を20件に設定。
-        long result = mTwitterDb.getRecordCount() + map.size() - TwitterParameter.RECORDMAX;
-
-        // レコード数が0より大きかったら、テーブルのレコードを削除
-        if (result > 0) {
-            mTwitterDb.delete(result);
-        }
-
         mTwitterDb.insertsIcon(map);
-
-        // HashMapをクリア
-        map.clear();
-        Log.v("MapSize(Clear)", Integer.toString(map.size()));
     }
 
     /**

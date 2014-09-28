@@ -1,13 +1,10 @@
 package com.android.twitter.activities;
 
-import twitter4j.auth.AccessToken;
-import twitter4j.auth.RequestToken;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -16,7 +13,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.android.twitter.MyLoaderCallbacks;
 import com.android.twitter.OauthLoader;
@@ -24,160 +20,131 @@ import com.android.twitter.OauthTask;
 import com.android.twitter.R;
 import com.android.twitter.RequestLoader;
 import com.android.twitter.TwitterParameter;
+import com.android.twitter.utils.PreferenceUtils;
+import com.android.twitter.utils.ToastUtils;
+
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
 
 /**
  * .
- *
+ * <p/>
  * 認証画面用のアクティビティ
- *
  */
 public class OAuthActivity extends Activity implements MyLoaderCallbacks {
 
-	/**. コンテキスト. */
-	private Context con;
+    /**
+     * . RequestLoaderオブジェクト.
+     */
+    private RequestLoader requestloader;
 
-	/** リクエストトークン. */
-	private RequestToken requesttoken;
+    /**
+     * ビューの作成、データの準備、初期処理などを行う.
+     *
+     * @param savedInstanceState 前回のアプリ終了時の情報を保持
+     */
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-	/** . RequestLoaderオブジェクト. */
-	private RequestLoader requestloader;
+        // ネットワークがつながっているかを判定
+        if (isConnectNetwork()) {
+            setContentView(R.layout.oauth);
+            requestloader = new RequestLoader(this, this);
+            getLoaderManager().initLoader(0, null, requestloader);
+        } else {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+            dialog.setMessage(R.string.mainneterr);
+            dialog.setPositiveButton(R.string.ok,
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    }).show();
+        }
+    }
 
-	/**
-	 *
-	 * ビューの作成、データの準備、初期処理などを行う.
-	 *
-	 * @param savedInstanceState
-	 *            前回のアプリ終了時の情報を保持
-	 *
-	 */
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+    /**
+     * .
+     *
+     * @return ネットワークが接続しているかをBooleanで返す
+     */
+    private boolean isConnectNetwork() {
+        ConnectivityManager connectivity = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo network = connectivity.getActiveNetworkInfo();
+        return network != null;
+    }
 
-		// ネットワークがつながっているかを判定
-		if (isConnectNetwork()) {
-			setContentView(R.layout.oauth);
-			con = this;
+    /**
+     * OauthLoaderからアクティビティにアクセスするためのメドッソ.
+     *
+     * @param oauthtask   oauthtaskオブジェクト
+     * @param accesstoken アクセストークン
+     */
+    public void oauthCallback(OauthTask oauthtask, AccessToken accesstoken) {
+        // 認証ができていたかを判定
+        if (accesstoken != null) {
+            // 認証できていたらAccessTokenなどを書き込む
+            PreferenceUtils.saveString(this, TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKEN_KEYNAME,
+                    accesstoken.getToken());
+            PreferenceUtils.saveString(this, TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKENSECRET_KYENAME,
+                    accesstoken.getTokenSecret());
 
-			requestloader = new RequestLoader(this, this);
-			getLoaderManager().initLoader(0, null, requestloader);
-		} else {
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-			dialog.setMessage(R.string.mainneterr);
-			dialog.setPositiveButton(R.string.ok,
-					new DialogInterface.OnClickListener() {
+            // タイムライン画面へ遷移する
+            Intent intent = new Intent(this, TimeLineActivity.class);
+            startActivity(intent);
+            finish();
+        } else {
 
-						public void onClick(DialogInterface dialog, int which) {
-							finish();
-						}
-					}).show();
-		}
+            switch (oauthtask.getErr()) {
+                case NETWORKERR:
+                    ToastUtils.show(this, R.string.errnet);
+                    break;
+                case OAUTHERR:
+                    ToastUtils.show(this, R.string.badpin);
+                    getLoaderManager().restartLoader(0, null, requestloader);
+                    break;
+                default:
+                    break;
+            }
+            // 認証用Loaderリセット
+            getLoaderManager().destroyLoader(1);
+        }
+    }
 
-	}
+    /**
+     * RequestLoaderからアクティビティにアクセスするためのメドッソ.
+     *
+     * @param reqToken リクエストトークン
+     */
+    public void requestCallback(final RequestToken reqToken) {
+        WebView webView = (WebView) findViewById(R.id.webview);
+        webView.setWebViewClient(new WebViewClient());
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.loadUrl(reqToken.getAuthorizationURL());
 
-	/**
-	 * .
-	 *
-	 * @return ネットワークが接続しているかをBooleanで返す
-	 */
-	public boolean isConnectNetwork() {
+        Button button = (Button) findViewById(R.id.button);
 
-		ConnectivityManager connectivity = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo network = connectivity.getActiveNetworkInfo();
-		return network != null;
+        button.setOnClickListener(new View.OnClickListener() {
 
-	}
+            public void onClick(View v) {
+                EditText editPin = (EditText) findViewById(R.id.pin);
+                String pin = editPin.getText().toString();
 
-	/**
-	 *
-	 * OauthLoaderからアクティビティにアクセスするためのメドッソ.
-	 *
-	 * @param oauthtask
-	 *            oauthtaskオブジェクト
-	 *
-	 * @param accesstoken
-	 *            アクセストークン
-	 */
-	public void oauthCallback(OauthTask oauthtask, AccessToken accesstoken) {
-		// 認証ができていたかを判定
-		if (accesstoken != null) {
+                // Pinコードが入力されているかを判定
+                if (!(pin.equals(""))) {
+                    // pinコードが入力されたいたら認証用のLoaderを起動する
+                    OauthLoader oauthloader = new OauthLoader(OAuthActivity.this,
+                            (MyLoaderCallbacks) OAuthActivity.this, reqToken);
 
-			// 認証できていたらAccessTokenなどを書き込む
-			SharedPreferences pref = getSharedPreferences(
-					TwitterParameter.PREFERENCES_NAME, MODE_PRIVATE);
-			SharedPreferences.Editor editor = pref.edit();
-			editor.putString(TwitterParameter.TOKEN_KEYNAME,
-					accesstoken.getToken());
-			editor.putString(TwitterParameter.TOKENSECRET_KYENAME,
-					accesstoken.getTokenSecret());
-			editor.commit();
-
-			// タイムライン画面へ遷移する
-			Intent intent = new Intent(this, TimeLineActivity.class);
-			startActivity(intent);
-			con = null;
-			finish();
-		} else {
-
-			switch (oauthtask.getErr()) {
-			case NETWORKERR:
-				Toast.makeText(con, R.string.errnet, Toast.LENGTH_LONG).show();
-				break;
-			case OAUTHERR:
-				Toast.makeText(con, R.string.badpin, Toast.LENGTH_LONG).show();
-				getLoaderManager().restartLoader(0, null, requestloader);
-				break;
-			default:
-				break;
-			}
-			// 認証用Loaderリセット
-			getLoaderManager().destroyLoader(1);
-		}
-	}
-
-	/**
-	 *
-	 * RequestLoaderからアクティビティにアクセスするためのメドッソ.
-	 *
-	 * @param reqToken
-	 *            リクエストトークン
-	 *
-	 */
-	public void requestCallback(RequestToken reqToken) {
-
-		requesttoken = reqToken;
-
-		WebView webView = (WebView) findViewById(R.id.webview);
-		webView.setWebViewClient(new WebViewClient());
-		webView.getSettings().setJavaScriptEnabled(true);
-		webView.loadUrl(reqToken.getAuthorizationURL());
-
-		Button button = (Button) findViewById(R.id.button);
-
-		button.setOnClickListener(new View.OnClickListener() {
-
-			public void onClick(View v) {
-				EditText editPin = (EditText) findViewById(R.id.pin);
-				String pin = editPin.getText().toString();
-
-				// Pinコードが入力されているかを判定
-				if (!(pin.equals(""))) {
-					// pinコードが入力されたいたら認証用のLoaderを起動する
-					OauthLoader oauthloader = new OauthLoader(con,
-							(MyLoaderCallbacks) con, requesttoken);
-
-					// Bundleにpinコードをセットして渡す
-					Bundle bundle = new Bundle();
-					bundle.putString("pin", pin);
-					getLoaderManager().initLoader(1, bundle, oauthloader);
-				} else {
-					Toast.makeText(getApplicationContext(), R.string.notpin,
-							Toast.LENGTH_LONG).show();
-
-				}
-
-			}
-
-		});
-	}
+                    // Bundleにpinコードをセットして渡す
+                    Bundle bundle = new Bundle();
+                    bundle.putString("pin", pin);
+                    getLoaderManager().initLoader(1, bundle, oauthloader);
+                } else {
+                    ToastUtils.show(OAuthActivity.this, R.string.notpin);
+                }
+            }
+        });
+    }
 }
