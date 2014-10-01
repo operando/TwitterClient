@@ -2,9 +2,11 @@ package com.android.twitter.activities;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.LoaderManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.Loader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -16,10 +18,10 @@ import android.widget.EditText;
 
 import com.android.twitter.MyLoaderCallbacks;
 import com.android.twitter.OauthLoader;
-import com.android.twitter.loaders.TwitterOauthLoaderTask;
 import com.android.twitter.R;
-import com.android.twitter.RequestLoader;
+import com.android.twitter.RequestTask;
 import com.android.twitter.TwitterParameter;
+import com.android.twitter.loaders.TwitterOauthLoaderTask;
 import com.android.twitter.utils.PreferenceUtils;
 import com.android.twitter.utils.ToastUtils;
 
@@ -34,11 +36,6 @@ import twitter4j.auth.RequestToken;
 public class OAuthActivity extends Activity implements MyLoaderCallbacks {
 
     /**
-     * . RequestLoaderオブジェクト.
-     */
-    private RequestLoader requestloader;
-
-    /**
      * ビューの作成、データの準備、初期処理などを行う.
      *
      * @param savedInstanceState 前回のアプリ終了時の情報を保持
@@ -50,8 +47,7 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
         // ネットワークがつながっているかを判定
         if (isConnectNetwork()) {
             setContentView(R.layout.oauth);
-            requestloader = new RequestLoader(this, this);
-            getLoaderManager().initLoader(0, null, requestloader);
+            requestToken();
         } else {
             AlertDialog.Builder dialog = new AlertDialog.Builder(this);
             dialog.setMessage(R.string.mainneterr);
@@ -63,6 +59,27 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
                     }).show();
         }
     }
+
+    private void requestToken() {
+        getLoaderManager().initLoader(0, null, new LoaderManager.LoaderCallbacks<RequestToken>() {
+            @Override
+            public Loader<RequestToken> onCreateLoader(int i, Bundle bundle) {
+                RequestTask requesttask = new RequestTask(getApplicationContext());
+                requesttask.forceLoad();
+                return requesttask;
+            }
+
+            @Override
+            public void onLoadFinished(Loader<RequestToken> loader, RequestToken requestToken) {
+                requestCallback(requestToken);
+            }
+
+            @Override
+            public void onLoaderReset(Loader<RequestToken> loader) {
+            }
+        });
+    }
+
 
     /**
      * .
@@ -102,7 +119,7 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
                     break;
                 case OAUTHERR:
                     ToastUtils.show(this, R.string.badpin);
-                    getLoaderManager().restartLoader(0, null, requestloader);
+                    requestToken();
                     break;
                 default:
                     break;
