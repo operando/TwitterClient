@@ -1,4 +1,4 @@
-package com.android.twitter;
+package com.android.twitter.loaders;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -8,12 +8,14 @@ import twitter4j.conf.ConfigurationBuilder;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
+import com.android.twitter.TwitterParameter;
+
 /**
  *
  * リクエストトークンを取得するAsyncTaskLoaderを継承したクラス.
  *
  */
-public class RequestTask extends AsyncTaskLoader<RequestToken> {
+public class TwitterRequestTokenLoader extends AsyncTaskLoader<RequestToken> {
 
 	/**
 	 *
@@ -22,7 +24,7 @@ public class RequestTask extends AsyncTaskLoader<RequestToken> {
 	 * @param context
 	 *            コンテキスト
 	 */
-	public RequestTask(Context context) {
+	public TwitterRequestTokenLoader(Context context) {
 		super(context);
 	}
 

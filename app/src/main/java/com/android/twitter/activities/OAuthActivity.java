@@ -19,7 +19,7 @@ import android.widget.EditText;
 import com.android.twitter.MyLoaderCallbacks;
 import com.android.twitter.OauthLoader;
 import com.android.twitter.R;
-import com.android.twitter.RequestTask;
+import com.android.twitter.loaders.TwitterRequestTokenLoader;
 import com.android.twitter.TwitterParameter;
 import com.android.twitter.loaders.TwitterOauthLoaderTask;
 import com.android.twitter.utils.PreferenceUtils;
@@ -64,7 +64,7 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
         getLoaderManager().initLoader(0, null, new LoaderManager.LoaderCallbacks<RequestToken>() {
             @Override
             public Loader<RequestToken> onCreateLoader(int i, Bundle bundle) {
-                RequestTask requesttask = new RequestTask(getApplicationContext());
+                TwitterRequestTokenLoader requesttask = new TwitterRequestTokenLoader(getApplicationContext());
                 requesttask.forceLoad();
                 return requesttask;
             }
