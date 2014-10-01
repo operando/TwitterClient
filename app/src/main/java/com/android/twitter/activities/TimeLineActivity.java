@@ -17,7 +17,7 @@ import android.widget.ListView;
 import com.android.twitter.R;
 import com.android.twitter.TwitterDbAdapter;
 import com.android.twitter.TwitterParameter;
-import com.android.twitter.TwitterTask;
+import com.android.twitter.loaders.TwitterTask;
 import com.android.twitter.adapters.TwitterAdapter;
 import com.android.twitter.models.TwitterStatus;
 import com.android.twitter.utils.PreferenceUtils;

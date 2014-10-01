@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Loader;
 import android.os.Bundle;
 
+import com.android.twitter.loaders.OauthTask;
+
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 //import android.util.Log;

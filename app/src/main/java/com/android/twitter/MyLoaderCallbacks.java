@@ -1,5 +1,7 @@
 package com.android.twitter;
 
+import com.android.twitter.loaders.OauthTask;
+
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 

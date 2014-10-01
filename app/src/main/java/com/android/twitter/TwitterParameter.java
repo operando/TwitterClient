@@ -42,7 +42,7 @@ public final class TwitterParameter {
 	public static final String TOKENSECRET_KYENAME = "tokensecret";
 
 	/** 例外の種類を特定するための列挙型 . */
-	public enum ERR {
+	public enum ERROR {
 		/** タイムライン取得エラー. */
 		TWITTERERR,
 		/** ネットワークエラー. */

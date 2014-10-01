@@ -1,9 +1,9 @@
-package com.android.twitter;
+package com.android.twitter.loaders;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
-import com.android.twitter.TwitterParameter.ERR;
+import com.android.twitter.TwitterParameter;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -30,7 +30,7 @@ public class OauthTask extends AsyncTaskLoader<AccessToken> {
 	private RequestToken mReqToken;
 
 	/**. 例外の種類を格納. */
-	private ERR exception;
+	private TwitterParameter.ERROR exception;
 
 	/**
 	 *
@@ -73,13 +73,13 @@ public class OauthTask extends AsyncTaskLoader<AccessToken> {
 		} catch (TwitterException e) {
 			e.printStackTrace();
 			if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
-				exception = ERR.OAUTHERR;
+				exception = TwitterParameter.ERROR.OAUTHERR;
 			} else {
 				if (e.getCause() instanceof IOException
 						&& e.getCause() instanceof ConnectException) {
-					exception = ERR.NETWORKERR;
+					exception = TwitterParameter.ERROR.NETWORKERR;
 				} else {
-					exception = ERR.OAUTHERR;
+					exception = TwitterParameter.ERROR.OAUTHERR;
 				}
 			}
 			return null;
@@ -92,7 +92,7 @@ public class OauthTask extends AsyncTaskLoader<AccessToken> {
 	 *
 	 * @return err 例外の種類を識別するための列挙型
 	 */
-	public ERR getErr() {
+	public TwitterParameter.ERROR getErr() {
 		return exception;
 	}
 

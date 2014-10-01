@@ -16,7 +16,7 @@ import android.widget.EditText;
 
 import com.android.twitter.MyLoaderCallbacks;
 import com.android.twitter.OauthLoader;
-import com.android.twitter.OauthTask;
+import com.android.twitter.loaders.OauthTask;
 import com.android.twitter.R;
 import com.android.twitter.RequestLoader;
 import com.android.twitter.TwitterParameter;

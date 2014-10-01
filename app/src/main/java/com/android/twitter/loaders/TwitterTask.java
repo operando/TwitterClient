@@ -1,4 +1,4 @@
-package com.android.twitter;
+package com.android.twitter.loaders;
 
 import android.app.ProgressDialog;
 import android.content.AsyncTaskLoader;
@@ -9,7 +9,9 @@ import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
-import com.android.twitter.TwitterParameter.ERR;
+import com.android.twitter.R;
+import com.android.twitter.TwitterDbAdapter;
+import com.android.twitter.TwitterParameter;
 import com.android.twitter.models.TwitterStatus;
 
 import java.io.BufferedInputStream;
@@ -49,7 +51,7 @@ public class TwitterTask extends AsyncTaskLoader<List<TwitterStatus>> {
     private ProgressDialog progure;
 
     /** . 例外の種類を格納. */
-    private ERR exception;
+    private TwitterParameter.ERROR exception;
 
     /** . Loaderを識別するためのID */
     private int loaderId;
@@ -204,15 +206,15 @@ public class TwitterTask extends AsyncTaskLoader<List<TwitterStatus>> {
         } catch (TwitterException e) {
             e.printStackTrace();
             if (e.isCausedByNetworkIssue()) {
-                exception = ERR.NETWORKERR;
+                exception = TwitterParameter.ERROR.NETWORKERR;
             } else {
                 // 認証エラーかどうかを判定
                 if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
                     // Log.v("tag", "notOauth");
-                    exception = ERR.OAUTHERR;
+                    exception = TwitterParameter.ERROR.OAUTHERR;
                 } else {
                     // Log.v("tag", "not401");
-                    exception = ERR.TWITTERERR;
+                    exception = TwitterParameter.ERROR.TWITTERERR;
                 }
             }
 
@@ -234,7 +236,7 @@ public class TwitterTask extends AsyncTaskLoader<List<TwitterStatus>> {
      *
      * @return err 例外の種類を識別するための列挙型
      */
-    public ERR getErr() {
+    public TwitterParameter.ERROR getErr() {
         return exception;
     }
 
