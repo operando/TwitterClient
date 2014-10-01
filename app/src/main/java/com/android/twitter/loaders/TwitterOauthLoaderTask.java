@@ -21,7 +21,7 @@ import twitter4j.conf.ConfigurationBuilder;
  *
  */
 
-public class OauthTask extends AsyncTaskLoader<AccessToken> {
+public class TwitterOauthLoaderTask extends AsyncTaskLoader<AccessToken> {
 
 	/** . 入力されたPINコードを保持 */
 	private String mPin;
@@ -43,7 +43,7 @@ public class OauthTask extends AsyncTaskLoader<AccessToken> {
 	 * @param reqToken
 	 *            リクエストトークン
 	 */
-	public OauthTask(Context context, String pin, RequestToken reqToken) {
+	public TwitterOauthLoaderTask(Context context, String pin, RequestToken reqToken) {
 		super(context);
 		mPin = pin;
 		mReqToken = reqToken;

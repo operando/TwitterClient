@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Loader;
 import android.os.Bundle;
 
-import com.android.twitter.loaders.OauthTask;
+import com.android.twitter.loaders.TwitterOauthLoaderTask;
 
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
@@ -60,7 +60,7 @@ public class OauthLoader implements LoaderCallbacks<AccessToken> {
 	 */
 	public Loader<AccessToken> onCreateLoader(int id, Bundle args) {
 
-		OauthTask oauthtask = new OauthTask(con, args.getString("pin"),
+		TwitterOauthLoaderTask oauthtask = new TwitterOauthLoaderTask(con, args.getString("pin"),
 				mReqToken);
 		oauthtask.forceLoad();
 
@@ -79,7 +79,7 @@ public class OauthLoader implements LoaderCallbacks<AccessToken> {
 	 *
 	 */
 	public void onLoadFinished(Loader<AccessToken> arg0, AccessToken arg1) {
-		OauthTask exceptionTaks = (OauthTask) arg0;
+		TwitterOauthLoaderTask exceptionTaks = (TwitterOauthLoaderTask) arg0;
 		mLoadercallback.oauthCallback(exceptionTaks, arg1);
 	}
 

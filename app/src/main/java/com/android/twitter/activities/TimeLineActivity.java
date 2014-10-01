@@ -17,7 +17,7 @@ import android.widget.ListView;
 import com.android.twitter.R;
 import com.android.twitter.TwitterDbAdapter;
 import com.android.twitter.TwitterParameter;
-import com.android.twitter.loaders.TwitterTask;
+import com.android.twitter.loaders.TwitterTimeLineLoaderTask;
 import com.android.twitter.adapters.TwitterAdapter;
 import com.android.twitter.models.TwitterStatus;
 import com.android.twitter.utils.PreferenceUtils;
@@ -38,7 +38,7 @@ public class TimeLineActivity extends ListActivity implements
     /**
      * TwitterTaskオブジェクトを保持.
      */
-    private TwitterTask twitterTask;
+    private TwitterTimeLineLoaderTask twitterTask;
 
     /**
      * . TwitterDbAdapterオブジェクト
@@ -99,7 +99,7 @@ public class TimeLineActivity extends ListActivity implements
      */
     public Loader<List<TwitterStatus>> onCreateLoader(int id, Bundle args) {
 
-        twitterTask = new TwitterTask(this,
+        twitterTask = new TwitterTimeLineLoaderTask(this,
                 args.getString(TwitterParameter.TOKEN_KEYNAME),
                 args.getString(TwitterParameter.TOKENSECRET_KYENAME), id,
                 mTwitterDb, map);
@@ -120,7 +120,7 @@ public class TimeLineActivity extends ListActivity implements
 
         if (arg1 == null) {
             // エラー処理.
-            TwitterTask exceptionTask = (TwitterTask) arg0;
+            TwitterTimeLineLoaderTask exceptionTask = (TwitterTimeLineLoaderTask) arg0;
             switch (exceptionTask.getErr()) {
                 case NETWORKERR:
                     ToastUtils.show(this, R.string.errnet);

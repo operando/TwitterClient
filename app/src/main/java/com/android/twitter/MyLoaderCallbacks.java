@@ -1,6 +1,6 @@
 package com.android.twitter;
 
-import com.android.twitter.loaders.OauthTask;
+import com.android.twitter.loaders.TwitterOauthLoaderTask;
 
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
@@ -20,7 +20,7 @@ public interface MyLoaderCallbacks {
 	 * @param arg1
 	 *            アクセストークン
 	 */
-	void oauthCallback(OauthTask arg0, AccessToken arg1);
+	void oauthCallback(TwitterOauthLoaderTask arg0, AccessToken arg1);
 
 	/**
 	 *

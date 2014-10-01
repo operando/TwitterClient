@@ -16,7 +16,7 @@ import android.widget.EditText;
 
 import com.android.twitter.MyLoaderCallbacks;
 import com.android.twitter.OauthLoader;
-import com.android.twitter.loaders.OauthTask;
+import com.android.twitter.loaders.TwitterOauthLoaderTask;
 import com.android.twitter.R;
 import com.android.twitter.RequestLoader;
 import com.android.twitter.TwitterParameter;
@@ -81,7 +81,7 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
      * @param oauthtask   oauthtaskオブジェクト
      * @param accesstoken アクセストークン
      */
-    public void oauthCallback(OauthTask oauthtask, AccessToken accesstoken) {
+    public void oauthCallback(TwitterOauthLoaderTask oauthtask, AccessToken accesstoken) {
         // 認証ができていたかを判定
         if (accesstoken != null) {
             // 認証できていたらAccessTokenなどを書き込む

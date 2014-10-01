@@ -36,7 +36,7 @@ import twitter4j.conf.ConfigurationBuilder;
  * バックグラウンド処理用のクラス. メインスレッドでは行えないネットワーク接続処理をする
  *
  */
-public class TwitterTask extends AsyncTaskLoader<List<TwitterStatus>> {
+public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatus>> {
 
     /** . OAuth認証設定用変数. */
     private ConfigurationBuilder confbuilder;
@@ -85,8 +85,8 @@ public class TwitterTask extends AsyncTaskLoader<List<TwitterStatus>> {
      *            差分取得アイコン保持用
      *
      */
-    public TwitterTask(Context context, String token, String tokensecret,
-            int id, TwitterDbAdapter db, HashMap<String, byte[]> hashmap) {
+    public TwitterTimeLineLoaderTask(Context context, String token, String tokensecret,
+                                     int id, TwitterDbAdapter db, HashMap<String, byte[]> hashmap) {
         super(context);
 
         confbuilder = new ConfigurationBuilder().setOAuthAccessToken(token)
