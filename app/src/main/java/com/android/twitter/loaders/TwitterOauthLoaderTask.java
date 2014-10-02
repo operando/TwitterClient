@@ -4,6 +4,7 @@ import android.content.AsyncTaskLoader;
 import android.content.Context;
 
 import com.android.twitter.TwitterParameter;
+import com.android.twitter.models.AsyncResult;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -16,84 +17,57 @@ import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 
 /**
- *
  * アクセストークンを取得するAsyncTaskLoaderを継承したクラス.
- *
  */
 
-public class TwitterOauthLoaderTask extends AsyncTaskLoader<AccessToken> {
+public class TwitterOauthLoaderTask extends AsyncTaskLoader<AsyncResult<AccessToken>> {
 
-	/** . 入力されたPINコードを保持 */
-	private String mPin;
+    /**
+     * . 入力されたPINコードを保持
+     */
+    private String mPin;
 
-	/** リクエストトークン. */
-	private RequestToken mReqToken;
+    /**
+     * リクエストトークン.
+     */
+    private RequestToken mReqToken;
 
-	/**. 例外の種類を格納. */
-	private TwitterParameter.ERROR exception;
+    public TwitterOauthLoaderTask(Context context, String pin, RequestToken reqToken) {
+        super(context);
+        mPin = pin;
+        mReqToken = reqToken;
+    }
 
-	/**
-	 *
-	 * コンストラクタ.
-	 *
-	 * @param context
-	 *            コンテキスト
-	 * @param pin
-	 *            pinコード
-	 * @param reqToken
-	 *            リクエストトークン
-	 */
-	public TwitterOauthLoaderTask(Context context, String pin, RequestToken reqToken) {
-		super(context);
-		mPin = pin;
-		mReqToken = reqToken;
-	}
-
-	/**
-	 *
-	 * アクセストークンの取得を行う.
-	 *
-	 * @return accsessToken アクセストークン
-	 *
-	 */
-	@Override
-	public AccessToken loadInBackground() {
-		try {
-			ConfigurationBuilder confbuilder = new ConfigurationBuilder()
-					.setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
-					.setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
-			Twitter twitter = new TwitterFactory(confbuilder.build())
-					.getInstance();
-
-			//アクセストークン取得
-			AccessToken accsessToken = twitter.getOAuthAccessToken(mReqToken,
-					mPin);
-
-			return accsessToken;
-		} catch (TwitterException e) {
-			e.printStackTrace();
-			if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
-				exception = TwitterParameter.ERROR.OAUTHERR;
-			} else {
-				if (e.getCause() instanceof IOException
-						&& e.getCause() instanceof ConnectException) {
-					exception = TwitterParameter.ERROR.NETWORKERR;
-				} else {
-					exception = TwitterParameter.ERROR.OAUTHERR;
-				}
-			}
-			return null;
-		}
-	}
-
-	/**
-	 *
-	 * 例外を識別する列挙型を返す.
-	 *
-	 * @return err 例外の種類を識別するための列挙型
-	 */
-	public TwitterParameter.ERROR getErr() {
-		return exception;
-	}
-
+    /**
+     * アクセストークンの取得を行う.
+     *
+     * @return accsessToken アクセストークン
+     */
+    @Override
+    public AsyncResult<AccessToken> loadInBackground() {
+        AsyncResult<AccessToken> asyncResult = new AsyncResult<AccessToken>();
+        try {
+            ConfigurationBuilder confbuilder = new ConfigurationBuilder()
+                    .setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
+                    .setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
+            Twitter twitter = new TwitterFactory(confbuilder.build())
+                    .getInstance();
+            AccessToken accsessToken = twitter.getOAuthAccessToken(mReqToken,
+                    mPin);
+            asyncResult.setData(accsessToken);
+        } catch (TwitterException e) {
+            asyncResult.setException(e);
+            if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
+                asyncResult.setError(TwitterParameter.ERROR.OAUTHERR);
+            } else {
+                if (e.getCause() instanceof IOException
+                        && e.getCause() instanceof ConnectException) {
+                    asyncResult.setError(TwitterParameter.ERROR.NETWORKERR);
+                } else {
+                    asyncResult.setError(TwitterParameter.ERROR.OAUTHERR);
+                }
+            }
+        }
+        return asyncResult;
+    }
 }

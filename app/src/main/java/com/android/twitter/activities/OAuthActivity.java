@@ -16,12 +16,11 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.android.twitter.MyLoaderCallbacks;
-import com.android.twitter.OauthLoader;
 import com.android.twitter.R;
-import com.android.twitter.loaders.TwitterRequestTokenLoader;
 import com.android.twitter.TwitterParameter;
 import com.android.twitter.loaders.TwitterOauthLoaderTask;
+import com.android.twitter.loaders.TwitterRequestTokenLoader;
+import com.android.twitter.models.AsyncResult;
 import com.android.twitter.utils.PreferenceUtils;
 import com.android.twitter.utils.ToastUtils;
 
@@ -33,7 +32,7 @@ import twitter4j.auth.RequestToken;
  * <p/>
  * 認証画面用のアクティビティ
  */
-public class OAuthActivity extends Activity implements MyLoaderCallbacks {
+public class OAuthActivity extends Activity {
 
     /**
      * ビューの作成、データの準備、初期処理などを行う.
@@ -93,43 +92,6 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
     }
 
     /**
-     * OauthLoaderからアクティビティにアクセスするためのメドッソ.
-     *
-     * @param oauthtask   oauthtaskオブジェクト
-     * @param accesstoken アクセストークン
-     */
-    public void oauthCallback(TwitterOauthLoaderTask oauthtask, AccessToken accesstoken) {
-        // 認証ができていたかを判定
-        if (accesstoken != null) {
-            // 認証できていたらAccessTokenなどを書き込む
-            PreferenceUtils.saveString(this, TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKEN_KEYNAME,
-                    accesstoken.getToken());
-            PreferenceUtils.saveString(this, TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKENSECRET_KYENAME,
-                    accesstoken.getTokenSecret());
-
-            // タイムライン画面へ遷移する
-            Intent intent = new Intent(this, TimeLineActivity.class);
-            startActivity(intent);
-            finish();
-        } else {
-
-            switch (oauthtask.getErr()) {
-                case NETWORKERR:
-                    ToastUtils.show(this, R.string.errnet);
-                    break;
-                case OAUTHERR:
-                    ToastUtils.show(this, R.string.badpin);
-                    requestToken();
-                    break;
-                default:
-                    break;
-            }
-            // 認証用Loaderリセット
-            getLoaderManager().destroyLoader(1);
-        }
-    }
-
-    /**
      * RequestLoaderからアクティビティにアクセスするためのメドッソ.
      *
      * @param reqToken リクエストトークン
@@ -150,17 +112,62 @@ public class OAuthActivity extends Activity implements MyLoaderCallbacks {
 
                 // Pinコードが入力されているかを判定
                 if (!(pin.equals(""))) {
-                    // pinコードが入力されたいたら認証用のLoaderを起動する
-                    OauthLoader oauthloader = new OauthLoader(OAuthActivity.this,
-                            (MyLoaderCallbacks) OAuthActivity.this, reqToken);
-
                     // Bundleにpinコードをセットして渡す
                     Bundle bundle = new Bundle();
                     bundle.putString("pin", pin);
-                    getLoaderManager().initLoader(1, bundle, oauthloader);
+                    requestTwitterOaut(reqToken, bundle);
                 } else {
                     ToastUtils.show(OAuthActivity.this, R.string.notpin);
                 }
+            }
+        });
+    }
+
+    private void requestTwitterOaut(final RequestToken reqToken, Bundle bundle) {
+        getLoaderManager().initLoader(1, bundle, new LoaderManager.LoaderCallbacks<AsyncResult<AccessToken>>() {
+            @Override
+            public Loader<AsyncResult<AccessToken>> onCreateLoader(int i, Bundle bundle) {
+                TwitterOauthLoaderTask oauthtask = new TwitterOauthLoaderTask(OAuthActivity.this, bundle.getString("pin"),
+                        reqToken);
+                oauthtask.forceLoad();
+
+                return oauthtask;
+            }
+
+            @Override
+            public void onLoadFinished(Loader<AsyncResult<AccessToken>> loader, AsyncResult<AccessToken> asyncResult) {
+                // 認証ができていたかを判定
+                AccessToken accesstoken = asyncResult.getData();
+                if (accesstoken != null) {
+                    // 認証できていたらAccessTokenなどを書き込む
+                    PreferenceUtils.saveString(OAuthActivity.this, TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKEN_KEYNAME,
+                            accesstoken.getToken());
+                    PreferenceUtils.saveString(OAuthActivity.this, TwitterParameter.PREFERENCES_NAME, TwitterParameter.TOKENSECRET_KYENAME,
+                            accesstoken.getTokenSecret());
+
+                    // タイムライン画面へ遷移する
+                    Intent intent = new Intent(OAuthActivity.this, TimeLineActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    switch (asyncResult.getError()) {
+                        case NETWORKERR:
+                            ToastUtils.show(OAuthActivity.this, R.string.errnet);
+                            break;
+                        case OAUTHERR:
+                            ToastUtils.show(OAuthActivity.this, R.string.badpin);
+                            requestToken();
+                            break;
+                        default:
+                            break;
+                    }
+                    // 認証用Loaderリセット
+                    getLoaderManager().destroyLoader(1);
+                }
+            }
+
+            @Override
+            public void onLoaderReset(Loader<AsyncResult<AccessToken>> loader) {
             }
         });
     }
