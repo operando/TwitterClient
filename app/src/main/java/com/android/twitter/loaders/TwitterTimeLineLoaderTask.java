@@ -1,13 +1,11 @@
 package com.android.twitter.loaders;
 
-import android.app.ProgressDialog;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import com.android.twitter.R;
 import com.android.twitter.TwitterDbAdapter;
@@ -41,23 +39,11 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
     /** . OAuth認証設定用変数. */
     private ConfigurationBuilder confbuilder;
 
-    /** . コンテキスト */
-    private Context con;
-
     /** . タイムラインのステータス */
     private List<Status> user;
 
-    /** タイムライン取得中に表示するプログレスバー. */
-    private ProgressDialog progure;
-
     /** . 例外の種類を格納. */
     private TwitterParameter.ERROR exception;
-
-    /** . Loaderを識別するためのID */
-    private int loaderId;
-
-    /** . TwitterDbAdapterオブジェクト */
-    private TwitterDbAdapter mTwitterDb;
 
     /** . 取得したアイコンの差分データを保持する */
     private HashMap<String, byte[]> map;
@@ -75,36 +61,19 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
      * @param tokensecret
      *            トークンシークレット
      *
-     * @param id
-     *            Loader識別ID
-     *
-     * @param db
-     *            TwitterDbAdapter オブジェクト
      *
      * @param hashmap
      *            差分取得アイコン保持用
      *
      */
     public TwitterTimeLineLoaderTask(Context context, String token, String tokensecret,
-                                     int id, TwitterDbAdapter db, HashMap<String, byte[]> hashmap) {
+                                     HashMap<String, byte[]> hashmap) {
         super(context);
-
         confbuilder = new ConfigurationBuilder().setOAuthAccessToken(token)
                 .setOAuthAccessTokenSecret(tokensecret)
                 .setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
                 .setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
-
-        con = context;
-        loaderId = id;
-        mTwitterDb = db;
         map = hashmap;
-
-        progure = new ProgressDialog(con);
-        progure.setMessage(con.getText(R.string.load).toString());
-        progure.setIndeterminate(true);
-        progure.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progure.show();
-
     }
 
     /**
@@ -116,17 +85,16 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
      */
     @Override
     public List<TwitterStatus> loadInBackground() {
-
         Twitter twitter = new TwitterFactory(confbuilder.build()).getInstance();
         List<TwitterStatus> list = new ArrayList<TwitterStatus>();
         try {
 
             user = twitter.getHomeTimeline();
 
-            SimpleDateFormat format = new SimpleDateFormat(con.getText(
+            SimpleDateFormat format = new SimpleDateFormat(getContext().getText(
                     R.string.date).toString());
-
-            // int i = 0;
+            TwitterDbAdapter dbHelper = new TwitterDbAdapter(getContext());
+            dbHelper.open();
 
             for (Status status : user) {
 
@@ -145,14 +113,11 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
                 Bitmap icon;
                 String uri = iconURL.toString();
 
-                Cursor c = mTwitterDb.selectall(uri);
+                Cursor c = dbHelper.selectall(uri);
 
                 byte[] b;
 
                 if (!c.moveToFirst() && !map.containsKey(uri)) {
-
-                    Log.v("tag", "iconNG");
-
                     // コネクションを開く
                     HttpURLConnection httpURL = (HttpURLConnection) iconURL
                             .openConnection();
@@ -168,14 +133,10 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
 
                     b = stream.toByteArray();
 
-                    /* クローズ */
                     httpURL.disconnect();
-                    // bos.close();
                     inputstream.close();
-                    /* ******************* */
 
                     map.put(uri, b);
-
                 } else {
                     if (map.containsKey(uri)) {
                         b = map.get(uri);
@@ -183,7 +144,6 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
                         b = c.getBlob(0);
                     }
                     icon = BitmapFactory.decodeByteArray(b, 0, b.length);
-                    Log.v("tag", "iconOK");
                 }
 
                 // ユーザ名セット
@@ -196,12 +156,8 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
                 twitterstatus.setIcon(icon);
                 // スクリーンネーム
                 twitterstatus.setName(status.getUser().getScreenName());
-
-                // Log.v("tag", Integer.toString(i++));
-
                 list.add(twitterstatus);
                 c.close();
-
             }
         } catch (TwitterException e) {
             e.printStackTrace();
@@ -210,21 +166,15 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
             } else {
                 // 認証エラーかどうかを判定
                 if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
-                    // Log.v("tag", "notOauth");
                     exception = TwitterParameter.ERROR.OAUTHERR;
                 } else {
-                    // Log.v("tag", "not401");
                     exception = TwitterParameter.ERROR.TWITTERERR;
                 }
             }
-
             return null;
-
         } catch (Exception e) {
             e.printStackTrace();
             return null;
-        } finally {
-            progure.dismiss();
         }
 
         return list;
@@ -257,16 +207,4 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
         // onStopLoading();
         cancelLoad();
     }
-
-    /**
-     * .
-     *
-     * Loaderを識別するめたのIDを返す
-     *
-     * @return lodaerId LoaderID
-     */
-    public int getId() {
-        return loaderId;
-    }
-
 }

@@ -3,12 +3,11 @@ package com.android.twitter.activities;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,9 +16,10 @@ import android.widget.ListView;
 import com.android.twitter.R;
 import com.android.twitter.TwitterDbAdapter;
 import com.android.twitter.TwitterParameter;
-import com.android.twitter.loaders.TwitterTimeLineLoaderTask;
 import com.android.twitter.adapters.TwitterAdapter;
+import com.android.twitter.loaders.TwitterTimeLineLoaderTask;
 import com.android.twitter.models.TwitterStatus;
+import com.android.twitter.utils.IntentUtils;
 import com.android.twitter.utils.PreferenceUtils;
 import com.android.twitter.utils.ToastUtils;
 
@@ -50,6 +50,9 @@ public class TimeLineActivity extends ListActivity implements
      */
     private HashMap<String, byte[]> map;
 
+    /** タイムライン取得中に表示するプログレスバー. */
+    private ProgressDialog mProgress;
+
     /**
      * ビューの作成、データの準備、初期処理などを行う.
      *
@@ -70,12 +73,9 @@ public class TimeLineActivity extends ListActivity implements
             startActivity(intent);
             finish();
         } else {
-
             mTwitterDb = new TwitterDbAdapter(this);
             mTwitterDb.open();
-
             map = new HashMap<String, byte[]>();
-
             getLoaderManager().initLoader(0, bundle, this);
         }
     }
@@ -98,15 +98,19 @@ public class TimeLineActivity extends ListActivity implements
      * @return twitterTask ローダオブジェクト
      */
     public Loader<List<TwitterStatus>> onCreateLoader(int id, Bundle args) {
-
         twitterTask = new TwitterTimeLineLoaderTask(this,
                 args.getString(TwitterParameter.TOKEN_KEYNAME),
-                args.getString(TwitterParameter.TOKENSECRET_KYENAME), id,
-                mTwitterDb, map);
-
+                args.getString(TwitterParameter.TOKENSECRET_KYENAME),
+                map);
         twitterTask.forceLoad();
-        return twitterTask;
 
+        mProgress = new ProgressDialog(this);
+        mProgress.setMessage(getText(R.string.load).toString());
+        mProgress.setIndeterminate(true);
+        mProgress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        mProgress.show();
+
+        return twitterTask;
     }
 
     /**
@@ -117,6 +121,7 @@ public class TimeLineActivity extends ListActivity implements
      */
     public void onLoadFinished(Loader<List<TwitterStatus>> arg0,
                                List<TwitterStatus> arg1) {
+        mProgress.dismiss();
 
         if (arg1 == null) {
             // エラー処理.
@@ -153,7 +158,6 @@ public class TimeLineActivity extends ListActivity implements
                                 }).show();
                     }
                     PreferenceUtils.clear(this, TwitterParameter.PREFERENCES_NAME);
-
                     break;
                 default:
                     break;
@@ -161,22 +165,16 @@ public class TimeLineActivity extends ListActivity implements
         } else {
             // タイムライン表示処理
             getLoaderManager().destroyLoader(1);
-            TwitterAdapter array = new TwitterAdapter(getApplicationContext(),
-                    R.layout.tl, arg1);
-            setListAdapter(array);
+            TwitterAdapter adapter = new TwitterAdapter(getApplicationContext(), arg1);
+            setListAdapter(adapter);
             setContentView(R.layout.main);
 
             // HashMapに保持すつ上限サイズを15に設定
             // テストでは上限を10に設定。
             if (map.size() >= TwitterParameter.MAPMAXSIZE) {
-                Log.v("MapSize(INSERTMAE)", Integer.toString(map.size()));
                 insertmap();
-            } else {
-                Log.v("MapSize(NOINSERT)", Integer.toString(map.size()));
             }
-
         }
-
     }
 
     /**
@@ -221,26 +219,18 @@ public class TimeLineActivity extends ListActivity implements
         int size = urlArray.length;
         if (size > 0) {
             if (size <= 1) {
-                Uri uri = Uri.parse(urlArray[0].getExpandedURL().toString());
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                startActivity(intent);
+                IntentUtils.openBrowser(this, urlArray[0].getExpandedURL().toString());
             } else {
-
                 final String[] url = new String[size];
-
                 for (int i = 0; i < size; i++) {
                     url[i] = urlArray[i].getExpandedURL().toString();
                 }
 
                 AlertDialog.Builder alert = new AlertDialog.Builder(this);
                 alert.setTitle(R.string.jumpurl);
-
                 alert.setItems(url, new DialogInterface.OnClickListener() {
-
                     public void onClick(DialogInterface dialoginterface, int i) {
-                        Uri uri = Uri.parse(url[i]);
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        startActivity(intent);
+                        IntentUtils.openBrowser(TimeLineActivity.this, url[i]);
                     }
                 }).create().show();
             }
