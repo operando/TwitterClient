@@ -20,15 +20,6 @@ import butterknife.InjectView;
  */
 public class TwitterAdapter extends BindableAdapter<TwitterStatus> {
 
-    /**
-     * レイアウトXMLからViewを動的に生成するために使用.
-     */
-    private LayoutInflater inflater;
-    /**
-     * タイムラインの情報が入ったList.
-     */
-    private List<TwitterStatus> items;
-
     static class ViewHolder {
         @InjectView(R.id.icon)
         ImageView mIcon;
@@ -49,16 +40,11 @@ public class TwitterAdapter extends BindableAdapter<TwitterStatus> {
     /**
      * コンストラクタ.
      *
-     * @param context            コンテキスト
-     * @param textViewResourceId ビューをインスタンス化するときに使用するTextViewを含むレイアウトファイルのリソースID
-     * @param item               タイムラインの情報が入ったList
+     * @param context コンテキスト
+     * @param item    タイムラインの情報が入ったList
      */
-    public TwitterAdapter(Context context, int textViewResourceId,
-                          List<TwitterStatus> item) {
+    public TwitterAdapter(Context context, List<TwitterStatus> item) {
         super(context, item);
-        this.items = item;
-        this.inflater = (LayoutInflater) context
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     @Override
@@ -80,5 +66,4 @@ public class TwitterAdapter extends BindableAdapter<TwitterStatus> {
         vh.mTextName.setText(item.getName());
         vh.mTextDate.setText(item.getDate());
     }
-
 }
