@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
@@ -56,6 +57,11 @@ public class TimeLineActivity extends ListActivity implements
 
     private boolean isTimeLineUpdate;
 
+    public static Intent createIntent(Context context) {
+        Intent intent = new Intent(context, TimeLineActivity.class);
+        return intent;
+    }
+
     /**
      * ビューの作成、データの準備、初期処理などを行う.
      *
@@ -72,8 +78,7 @@ public class TimeLineActivity extends ListActivity implements
         // 認証済みかどうかを判定
         if (token.length() == 0) {
             // 　認証画面へ遷移する
-            Intent intent = new Intent(this, OAuthActivity.class);
-            startActivity(intent);
+            startActivity(OAuthActivity.createIntent(this));
             finish();
         } else {
             mTwitterDb = new TwitterDbAdapter(this);
@@ -137,19 +142,15 @@ public class TimeLineActivity extends ListActivity implements
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
-                                    Intent intent = new Intent(
-                                            getApplicationContext(),
-                                            OAuthActivity.class);
-                                    startActivity(intent);
+                                    startActivity(OAuthActivity.createIntent(TimeLineActivity.this));
                                     finish();
                                 }
                             }).show();
                 } else {
                     // 初期起動時の認証エラー
-                    Intent intent = new Intent(this, OAuthActivity.class);
-                    startActivity(intent);
-                    finish();
+                    startActivity(OAuthActivity.createIntent(this));
                     getLoaderManager().destroyLoader(0);
+                    finish();
                 }
                 PreferenceUtils.clear(this, TwitterParameter.PREFERENCES_NAME);
                 return;

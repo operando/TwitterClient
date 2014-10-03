@@ -35,6 +35,11 @@ import twitter4j.auth.RequestToken;
  */
 public class OAuthActivity extends Activity {
 
+    public static Intent createIntent(Context context){
+        Intent intent = new Intent(context, OAuthActivity.class);
+        return intent;
+    }
+
     /**
      * ビューの作成、データの準備、初期処理などを行う.
      *
@@ -147,8 +152,7 @@ public class OAuthActivity extends Activity {
                             accesstoken.getTokenSecret());
 
                     // タイムライン画面へ遷移する
-                    Intent intent = new Intent(OAuthActivity.this, TimeLineActivity.class);
-                    startActivity(intent);
+                    startActivity(TimeLineActivity.createIntent(OAuthActivity.this));
                     finish();
                 } else {
                     TwitterParameter.ERROR error = asyncResult.getError();
