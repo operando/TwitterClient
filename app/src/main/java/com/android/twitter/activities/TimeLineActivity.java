@@ -18,6 +18,7 @@ import com.android.twitter.TwitterDbAdapter;
 import com.android.twitter.TwitterParameter;
 import com.android.twitter.adapters.TwitterAdapter;
 import com.android.twitter.loaders.TwitterTimeLineLoaderTask;
+import com.android.twitter.models.AsyncResult;
 import com.android.twitter.models.TwitterStatus;
 import com.android.twitter.utils.IntentUtils;
 import com.android.twitter.utils.PreferenceUtils;
@@ -33,7 +34,7 @@ import twitter4j.URLEntity;
  * タイムライン画面を表示するアクティビティ.
  */
 public class TimeLineActivity extends ListActivity implements
-        LoaderCallbacks<List<TwitterStatus>> {
+        LoaderCallbacks<AsyncResult<List<TwitterStatus>>> {
 
     /**
      * TwitterTaskオブジェクトを保持.
@@ -52,6 +53,8 @@ public class TimeLineActivity extends ListActivity implements
 
     /** タイムライン取得中に表示するプログレスバー. */
     private ProgressDialog mProgress;
+
+    private boolean isTimeLineUpdate;
 
     /**
      * ビューの作成、データの準備、初期処理などを行う.
@@ -97,11 +100,10 @@ public class TimeLineActivity extends ListActivity implements
      * @param args ローダインスタンスの初期化に必要なパラメーターを格納
      * @return twitterTask ローダオブジェクト
      */
-    public Loader<List<TwitterStatus>> onCreateLoader(int id, Bundle args) {
+    public Loader<AsyncResult<List<TwitterStatus>>> onCreateLoader(int id, Bundle args) {
         twitterTask = new TwitterTimeLineLoaderTask(this,
                 args.getString(TwitterParameter.TOKEN_KEYNAME),
-                args.getString(TwitterParameter.TOKENSECRET_KYENAME),
-                map);
+                args.getString(TwitterParameter.TOKENSECRET_KYENAME), map);
         twitterTask.forceLoad();
 
         mProgress = new ProgressDialog(this);
@@ -116,32 +118,23 @@ public class TimeLineActivity extends ListActivity implements
     /**
      * Loaderの処理終了コールバック.
      *
-     * @param arg0 ローダオブジェクト
-     * @param arg1 取得したタイムラインの情報
+     * @param loader ローダオブジェクト
+     * @param asyncResult 取得したタイムラインの情報
      */
-    public void onLoadFinished(Loader<List<TwitterStatus>> arg0,
-                               List<TwitterStatus> arg1) {
+    public void onLoadFinished(Loader<AsyncResult<List<TwitterStatus>>> loader,
+                               AsyncResult<List<TwitterStatus>> asyncResult) {
         mProgress.dismiss();
 
-        if (arg1 == null) {
-            // エラー処理.
-            TwitterTimeLineLoaderTask exceptionTask = (TwitterTimeLineLoaderTask) arg0;
-            TwitterParameter.ERROR error = exceptionTask.getErr();
+        if (asyncResult.getException() != null) {
+            TwitterParameter.ERROR error = asyncResult.getError();
             ErrorToast.show(this, error);
             if (error == TwitterParameter.ERROR.OAUTHERR) {
-                if (exceptionTask.getId() == 0) {
-                    // 初期起動時の認証エラー
-                    Intent intent = new Intent(this, OAuthActivity.class);
-                    startActivity(intent);
-                    finish();
-                    getLoaderManager().destroyLoader(0);
-                } else {
+                if (isTimeLineUpdate) {
                     // 更新時の認証エラー
                     AlertDialog.Builder dialog = new AlertDialog.Builder(this);
                     dialog.setMessage(R.string.apperr);
                     dialog.setPositiveButton(R.string.ok,
                             new DialogInterface.OnClickListener() {
-
                                 public void onClick(DialogInterface dialog,
                                                     int which) {
                                     Intent intent = new Intent(
@@ -151,13 +144,20 @@ public class TimeLineActivity extends ListActivity implements
                                     finish();
                                 }
                             }).show();
+                } else {
+                    // 初期起動時の認証エラー
+                    Intent intent = new Intent(this, OAuthActivity.class);
+                    startActivity(intent);
+                    finish();
+                    getLoaderManager().destroyLoader(0);
                 }
                 PreferenceUtils.clear(this, TwitterParameter.PREFERENCES_NAME);
+                return;
             }
-        } else {
+
             // タイムライン表示処理
             getLoaderManager().destroyLoader(1);
-            TwitterAdapter adapter = new TwitterAdapter(getApplicationContext(), arg1);
+            TwitterAdapter adapter = new TwitterAdapter(getApplicationContext(), asyncResult.getData());
             setListAdapter(adapter);
             setContentView(R.layout.main);
 
@@ -191,6 +191,7 @@ public class TimeLineActivity extends ListActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.time_line_update:
+                isTimeLineUpdate = true;
                 Bundle bundle = createBundle();
                 getLoaderManager().initLoader(1, bundle, this);
                 return true;
@@ -203,9 +204,7 @@ public class TimeLineActivity extends ListActivity implements
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-
-        List<Status> user = twitterTask.getUser();
-        Status status = user.get(position);
+        Status status = ((AsyncResult<List<TwitterStatus>>) l.getAdapter().getItem(position)).getData().get(position).getTimeLineStatus();
         URLEntity[] urlArray = status.getURLEntities();
 
         int size = urlArray.length;
@@ -260,9 +259,8 @@ public class TimeLineActivity extends ListActivity implements
     /**
      * Loaderがリセットされた時によびだされる.
      *
-     * @param arg0 ローダオブジェクト
+     * @param loader ローダオブジェクト
      */
-    public void onLoaderReset(Loader<List<TwitterStatus>> arg0) {
-
+    public void onLoaderReset(Loader<AsyncResult<List<TwitterStatus>>> loader) {
     }
 }

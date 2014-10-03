@@ -4,18 +4,20 @@ import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 
 import com.android.twitter.R;
 import com.android.twitter.TwitterDbAdapter;
 import com.android.twitter.TwitterParameter;
+import com.android.twitter.models.AsyncResult;
 import com.android.twitter.models.TwitterStatus;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,44 +32,30 @@ import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
 /**
- *
  * バックグラウンド処理用のクラス. メインスレッドでは行えないネットワーク接続処理をする
- *
  */
-public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatus>> {
+public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<AsyncResult<List<TwitterStatus>>> {
 
-    /** . OAuth認証設定用変数. */
+    /**
+     * . OAuth認証設定用変数.
+     */
     private ConfigurationBuilder confbuilder;
 
-    /** . タイムラインのステータス */
-    private List<Status> user;
-
-    /** . 例外の種類を格納. */
-    private TwitterParameter.ERROR exception;
-
-    /** . 取得したアイコンの差分データを保持する */
+    /**
+     * . 取得したアイコンの差分データを保持する
+     */
     private HashMap<String, byte[]> map;
 
     /**
-     *
      * コンストラクタ.
      *
-     * @param context
-     *            コンテキスト
-     *
-     * @param token
-     *            アクセストークン
-     *
-     * @param tokensecret
-     *            トークンシークレット
-     *
-     *
-     * @param hashmap
-     *            差分取得アイコン保持用
-     *
+     * @param context     コンテキスト
+     * @param token       アクセストークン
+     * @param tokensecret トークンシークレット
+     * @param hashmap     差分取得アイコン保持用
      */
     public TwitterTimeLineLoaderTask(Context context, String token, String tokensecret,
-                                     HashMap<String, byte[]> hashmap) {
+                                      HashMap<String, byte[]> hashmap) {
         super(context);
         confbuilder = new ConfigurationBuilder().setOAuthAccessToken(token)
                 .setOAuthAccessTokenSecret(tokensecret)
@@ -76,20 +64,14 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
         map = hashmap;
     }
 
-    /**
-     *
-     * タイムラインの取得を行う.
-     *
-     * @return list 取得したタイムラインの情報
-     *
-     */
     @Override
-    public List<TwitterStatus> loadInBackground() {
+    public AsyncResult<List<TwitterStatus>> loadInBackground() {
+        AsyncResult<List<TwitterStatus>> asyncResult = new AsyncResult<List<TwitterStatus>>();
         Twitter twitter = new TwitterFactory(confbuilder.build()).getInstance();
         List<TwitterStatus> list = new ArrayList<TwitterStatus>();
         try {
 
-            user = twitter.getHomeTimeline();
+            List<Status> user = twitter.getHomeTimeline();
 
             SimpleDateFormat format = new SimpleDateFormat(getContext().getText(
                     R.string.date).toString());
@@ -129,7 +111,7 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
 
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
-                    icon.compress(CompressFormat.PNG, 100, stream);
+                    icon.compress(Bitmap.CompressFormat.PNG, 100, stream);
 
                     b = stream.toByteArray();
 
@@ -146,65 +128,42 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<List<TwitterStatu
                     icon = BitmapFactory.decodeByteArray(b, 0, b.length);
                 }
 
-                // ユーザ名セット
                 twitterstatus.setId(status.getUser().getName());
-                // ツイート時間セット
                 twitterstatus.setDate(format.format(date));
-                // タイムラインセット
                 twitterstatus.setTl(status.getText());
-                // アイコンセット
                 twitterstatus.setIcon(icon);
-                // スクリーンネーム
                 twitterstatus.setName(status.getUser().getScreenName());
+                twitterstatus.setTimeLineStatus(status);
                 list.add(twitterstatus);
                 c.close();
             }
+            asyncResult.setData(list);
         } catch (TwitterException e) {
+            asyncResult.setException(e);
             e.printStackTrace();
             if (e.isCausedByNetworkIssue()) {
-                exception = TwitterParameter.ERROR.NETWORKERR;
+                asyncResult.setError(TwitterParameter.ERROR.NETWORKERR);
             } else {
                 // 認証エラーかどうかを判定
                 if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
-                    exception = TwitterParameter.ERROR.OAUTHERR;
+                    asyncResult.setError(TwitterParameter.ERROR.OAUTHERR);
                 } else {
-                    exception = TwitterParameter.ERROR.TWITTERERR;
+                    asyncResult.setError(TwitterParameter.ERROR.TWITTERERR);
                 }
             }
-            return null;
-        } catch (Exception e) {
+        } catch (MalformedURLException e) {
+            asyncResult.setException(e);
             e.printStackTrace();
-            return null;
+        } catch (IOException e) {
+            asyncResult.setException(e);
+            e.printStackTrace();
         }
-
-        return list;
-    }
-
-    /**
-     *
-     * 例外を識別する列挙型を返す.
-     *
-     * @return err 例外の種類を識別するための列挙型
-     */
-    public TwitterParameter.ERROR getErr() {
-        return exception;
-    }
-
-    /**
-     * .
-     *
-     * 取得したタイムラインのステータスを返す
-     *
-     * @return user 取得したタイムラインのステータス
-     */
-    public List<Status> getUser() {
-        return user;
+        return asyncResult;
     }
 
     @Override
     protected void onReset() {
         super.onReset();
-        // onStopLoading();
         cancelLoad();
     }
 }

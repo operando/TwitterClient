@@ -3,6 +3,7 @@ package com.android.twitter.models;
 import android.graphics.Bitmap;
 
 import lombok.Data;
+import twitter4j.Status;
 
 /**
  *
@@ -22,5 +23,7 @@ public class TwitterStatus {
     private Bitmap icon;
     /** . ユーザー名を保持するために使用.　 */
     private String name;
+    /** . TimeLine Status.　 */
+    private Status timeLineStatus;
 
 }
