@@ -23,6 +23,7 @@ import com.android.twitter.loaders.TwitterRequestTokenLoader;
 import com.android.twitter.models.AsyncResult;
 import com.android.twitter.utils.PreferenceUtils;
 import com.android.twitter.utils.ToastUtils;
+import com.android.twitter.views.ErrorToast;
 
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
@@ -150,16 +151,10 @@ public class OAuthActivity extends Activity {
                     startActivity(intent);
                     finish();
                 } else {
-                    switch (asyncResult.getError()) {
-                        case NETWORKERR:
-                            ToastUtils.show(OAuthActivity.this, R.string.errnet);
-                            break;
-                        case OAUTHERR:
-                            ToastUtils.show(OAuthActivity.this, R.string.badpin);
-                            requestToken();
-                            break;
-                        default:
-                            break;
+                    TwitterParameter.ERROR error = asyncResult.getError();
+                    ErrorToast.show(OAuthActivity.this, error);
+                    if (error == TwitterParameter.ERROR.OAUTHERR) {
+                        requestToken();
                     }
                     // 認証用Loaderリセット
                     getLoaderManager().destroyLoader(1);

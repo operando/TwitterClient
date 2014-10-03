@@ -21,7 +21,7 @@ import com.android.twitter.loaders.TwitterTimeLineLoaderTask;
 import com.android.twitter.models.TwitterStatus;
 import com.android.twitter.utils.IntentUtils;
 import com.android.twitter.utils.PreferenceUtils;
-import com.android.twitter.utils.ToastUtils;
+import com.android.twitter.views.ErrorToast;
 
 import java.util.HashMap;
 import java.util.List;
@@ -126,41 +126,33 @@ public class TimeLineActivity extends ListActivity implements
         if (arg1 == null) {
             // エラー処理.
             TwitterTimeLineLoaderTask exceptionTask = (TwitterTimeLineLoaderTask) arg0;
-            switch (exceptionTask.getErr()) {
-                case NETWORKERR:
-                    ToastUtils.show(this, R.string.errnet);
-                    break;
-                case TWITTERERR:
-                    ToastUtils.show(this, R.string.gettlerr);
-                    break;
-                case OAUTHERR:
-                    if (exceptionTask.getId() == 0) {
-                        // 初期起動時の認証エラー
-                        Intent intent = new Intent(this, OAuthActivity.class);
-                        startActivity(intent);
-                        finish();
-                        getLoaderManager().destroyLoader(0);
-                    } else {
-                        // 更新時の認証エラー
-                        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-                        dialog.setMessage(R.string.apperr);
-                        dialog.setPositiveButton(R.string.ok,
-                                new DialogInterface.OnClickListener() {
+            TwitterParameter.ERROR error = exceptionTask.getErr();
+            ErrorToast.show(this, error);
+            if (error == TwitterParameter.ERROR.OAUTHERR) {
+                if (exceptionTask.getId() == 0) {
+                    // 初期起動時の認証エラー
+                    Intent intent = new Intent(this, OAuthActivity.class);
+                    startActivity(intent);
+                    finish();
+                    getLoaderManager().destroyLoader(0);
+                } else {
+                    // 更新時の認証エラー
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+                    dialog.setMessage(R.string.apperr);
+                    dialog.setPositiveButton(R.string.ok,
+                            new DialogInterface.OnClickListener() {
 
-                                    public void onClick(DialogInterface dialog,
-                                                        int which) {
-                                        Intent intent = new Intent(
-                                                getApplicationContext(),
-                                                OAuthActivity.class);
-                                        startActivity(intent);
-                                        finish();
-                                    }
-                                }).show();
-                    }
-                    PreferenceUtils.clear(this, TwitterParameter.PREFERENCES_NAME);
-                    break;
-                default:
-                    break;
+                                public void onClick(DialogInterface dialog,
+                                                    int which) {
+                                    Intent intent = new Intent(
+                                            getApplicationContext(),
+                                            OAuthActivity.class);
+                                    startActivity(intent);
+                                    finish();
+                                }
+                            }).show();
+                }
+                PreferenceUtils.clear(this, TwitterParameter.PREFERENCES_NAME);
             }
         } else {
             // タイムライン表示処理
