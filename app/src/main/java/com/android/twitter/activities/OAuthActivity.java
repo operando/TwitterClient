@@ -51,7 +51,7 @@ public class OAuthActivity extends Activity {
 
         // ネットワークがつながっているかを判定
         if (isConnectNetwork()) {
-            setContentView(R.layout.oauth);
+            setContentView(R.layout.activity_oauth);
             requestToken();
         } else {
             AlertDialog.Builder dialog = new AlertDialog.Builder(this);

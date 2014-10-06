@@ -49,7 +49,7 @@ public class TwitterAdapter extends BindableAdapter<TwitterStatus> {
 
     @Override
     public View newView(LayoutInflater inflater, int position, ViewGroup container) {
-        View v = inflater.inflate(R.layout.tl, container, false);
+        View v = inflater.inflate(R.layout.list_item_timeline, container, false);
         ViewHolder vh = new ViewHolder(v);
         v.setTag(vh);
 

@@ -160,7 +160,7 @@ public class TimeLineActivity extends ListActivity implements
             getLoaderManager().destroyLoader(1);
             TwitterAdapter adapter = new TwitterAdapter(getApplicationContext(), asyncResult.getData());
             setListAdapter(adapter);
-            setContentView(R.layout.main);
+            setContentView(R.layout.activity_timeline);
 
             // HashMapに保持すつ上限サイズを15に設定
             // テストでは上限を10に設定。
