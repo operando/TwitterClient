@@ -52,7 +52,9 @@ public class TimeLineActivity extends ListActivity implements
      */
     private HashMap<String, byte[]> map;
 
-    /** タイムライン取得中に表示するプログレスバー. */
+    /**
+     * タイムライン取得中に表示するプログレスバー.
+     */
     private ProgressDialog mProgress;
 
     private boolean isTimeLineUpdate;
@@ -123,7 +125,7 @@ public class TimeLineActivity extends ListActivity implements
     /**
      * Loaderの処理終了コールバック.
      *
-     * @param loader ローダオブジェクト
+     * @param loader      ローダオブジェクト
      * @param asyncResult 取得したタイムラインの情報
      */
     public void onLoadFinished(Loader<AsyncResult<List<TwitterStatus>>> loader,
