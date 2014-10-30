@@ -3,7 +3,7 @@ package com.android.twitter.loaders;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
-import com.android.twitter.TwitterParameter;
+import com.android.twitter.TwitterClientApplication;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -33,18 +33,20 @@ public class TwitterRequestTokenLoader extends AsyncTaskLoader<RequestToken> {
     @Override
     public RequestToken loadInBackground() {
         ConfigurationBuilder confbuilder = new ConfigurationBuilder()
-                .setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
-                .setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
+                .setOAuthConsumerKey(TwitterClientApplication.consumerkey)
+                .setOAuthConsumerSecret(TwitterClientApplication.consumerkey);
         try {
             Twitter twitter = new TwitterFactory(confbuilder.build())
                     .getInstance();
 
             // リクエストトークン取得
-            RequestToken reqToken = twitter.getOAuthRequestToken("");
+            RequestToken reqToken = twitter.getOAuthRequestToken();
 
             return reqToken;
         } catch (TwitterException e) {
+            e.printStackTrace();
             return null;
         }
     }
+
 }

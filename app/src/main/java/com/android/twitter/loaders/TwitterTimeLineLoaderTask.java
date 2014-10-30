@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.android.twitter.R;
+import com.android.twitter.TwitterClientApplication;
 import com.android.twitter.TwitterDbAdapter;
 import com.android.twitter.TwitterParameter;
 import com.android.twitter.models.AsyncResult;
@@ -59,8 +60,8 @@ public class TwitterTimeLineLoaderTask extends AsyncTaskLoader<AsyncResult<List<
         super(context);
         confbuilder = new ConfigurationBuilder().setOAuthAccessToken(token)
                 .setOAuthAccessTokenSecret(tokensecret)
-                .setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
-                .setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
+                .setOAuthConsumerKey(TwitterClientApplication.consumerkey)
+                .setOAuthConsumerSecret(TwitterClientApplication.consumersecret);
         map = hashmap;
     }
 

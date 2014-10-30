@@ -3,11 +3,9 @@ package com.android.twitter.loaders;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 
+import com.android.twitter.TwitterClientApplication;
 import com.android.twitter.TwitterParameter;
 import com.android.twitter.models.AsyncResult;
-
-import java.io.IOException;
-import java.net.ConnectException;
 
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -48,8 +46,8 @@ public class TwitterOauthLoaderTask extends AsyncTaskLoader<AsyncResult<AccessTo
         AsyncResult<AccessToken> asyncResult = new AsyncResult<AccessToken>();
         try {
             ConfigurationBuilder confbuilder = new ConfigurationBuilder()
-                    .setOAuthConsumerKey(TwitterParameter.CONSUMERKEY)
-                    .setOAuthConsumerSecret(TwitterParameter.CONSUMERSECRET);
+                    .setOAuthConsumerKey(TwitterClientApplication.consumerkey)
+                    .setOAuthConsumerSecret(TwitterClientApplication.consumersecret);
             Twitter twitter = new TwitterFactory(confbuilder.build())
                     .getInstance();
             AccessToken accsessToken = twitter.getOAuthAccessToken(mReqToken,
@@ -57,15 +55,12 @@ public class TwitterOauthLoaderTask extends AsyncTaskLoader<AsyncResult<AccessTo
             asyncResult.setData(accsessToken);
         } catch (TwitterException e) {
             asyncResult.setException(e);
-            if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
+            if (e.isCausedByNetworkIssue()) {
+                asyncResult.setError(TwitterParameter.ERROR.NETWORKERR);
+            } else if (TwitterParameter.CLIENT_ERROR == e.getStatusCode()) {
                 asyncResult.setError(TwitterParameter.ERROR.OAUTHERR);
             } else {
-                if (e.getCause() instanceof IOException
-                        && e.getCause() instanceof ConnectException) {
-                    asyncResult.setError(TwitterParameter.ERROR.NETWORKERR);
-                } else {
-                    asyncResult.setError(TwitterParameter.ERROR.OAUTHERR);
-                }
+                asyncResult.setError(TwitterParameter.ERROR.OAUTHERR);
             }
         }
         return asyncResult;

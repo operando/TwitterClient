@@ -29,17 +29,6 @@ public final class TwitterParameter {
      */
     public static final int RECORDMAX = 100;
 
-
-    /**
-     * コンシューマーキー.
-     */
-    public static final String CONSUMERKEY = "xxxxxxxxxxxxxxxxxxxxxxx";
-
-    /**
-     * コンシューマーシークレット.
-     */
-    public static final String CONSUMERSECRET = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-
     /**
      * プリファレンスのファイル名 .
      */
